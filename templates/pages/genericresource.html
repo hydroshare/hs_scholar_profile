@@ -1,0 +1,52 @@
+{% extends "pages/page.html" %}
+{% load geoanalytics_tags pages_tags mezzanine_tags %}
+
+{% block main %}
+    {% set_ppm_permissions page %}
+
+<div class='row'>
+    {% editable page.genericresource.content %}
+       {{ page.genericresource.content|safe|richtext_filter }}
+    {% endeditable %}
+</div>
+
+<h4>Download files</h4>
+<div class='row'>
+{% if page.genericresource.resource_file %}
+    <a class='btn btn-lg btn-primary' href='{{page.genericresource.resource_file.url}}'>{{ page.genericresource.resource_file.name }}</a>
+{% elif page.genericresource.resource_url %}
+    <a class='btn btn-lg btn-primary' href='{{page.genericresource.resource_url}}'>Resource URL links to off-site</a>
+{% endif %}
+</div>
+
+<div class='row'>
+    <ul class='list-group'>
+        {% editable page.genericresource.public %}
+        <li class='list-group-item'><b>Publicly viewable:</b> {{ page.genericresource.public|yesno }}</li>
+        {% endeditable %}
+        {% editable page.genericresource.owner %}
+        <li class='list-group-item'><b>Owner:</b>{{ page.genericresource.owner.email }}</li>
+        {% endeditable %}
+        {% editable page.genericresource.frozen %}
+        <li class='list-group-item'><b>Published:</b> {{ page.genericresource.frozen|yesno }}</li>
+        {% endeditable %}
+        {% editable page.genericresource.do_not_distribute %}
+        <li class='list-group-item'><b>Do Not Distribute:</b> {{ page.genericresource.do_not_distribute|yesno }}</li>
+        {% endeditable %}
+    </ul>
+</div>
+
+<h4>Dublin Core Metadata</h4>
+<table class="table table-striped">
+{% for m in page.genericresource.dublin_metadata.all %}
+<tr> 
+<td>{{m.term_name}}</td>
+<td>{{m.qualifier}}</td>
+<td>{{m.content}}</td>
+</tr>
+{% endfor %}
+</table>
+    
+    {% include 'pages/includes/page_permissions_editor.html' %}
+
+{% endblock %}
