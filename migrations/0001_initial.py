@@ -12,19 +12,35 @@ class Migration(SchemaMigration):
         db.create_table(u'hs_core_genericresource', (
             (u'page_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['pages.Page'], unique=True, primary_key=True)),
             ('content', self.gf('mezzanine.core.fields.RichTextField')()),
+            ('user', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'genericresources', to=orm['auth.User'])),
+            ('creator', self.gf('django.db.models.fields.related.ForeignKey')(related_name='creator_of', to=orm['auth.User'])),
             ('public', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('owner', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True)),
             ('frozen', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('do_not_distribute', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('discoverable', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('published_and_frozen', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('last_changed_by', self.gf('django.db.models.fields.related.ForeignKey')(related_name='last_changed', null=True, to=orm['auth.User'])),
             ('resource_file', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
             ('resource_url', self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True)),
         ))
         db.send_create_signal(u'hs_core', ['GenericResource'])
 
+        # Adding M2M table for field owners on 'GenericResource'
+        m2m_table_name = db.shorten_name(u'hs_core_genericresource_owners')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('genericresource', models.ForeignKey(orm[u'hs_core.genericresource'], null=False)),
+            ('user', models.ForeignKey(orm[u'auth.user'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['genericresource_id', 'user_id'])
+
 
     def backwards(self, orm):
         # Deleting model 'GenericResource'
         db.delete_table(u'hs_core_genericresource')
+
+        # Removing M2M table for field owners on 'GenericResource'
+        db.delete_table(db.shorten_name(u'hs_core_genericresource_owners'))
 
 
     models = {
@@ -67,13 +83,18 @@ class Migration(SchemaMigration):
         u'hs_core.genericresource': {
             'Meta': {'ordering': "(u'_order',)", 'object_name': 'GenericResource', '_ormbases': [u'pages.Page']},
             'content': ('mezzanine.core.fields.RichTextField', [], {}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'creator_of'", 'to': u"orm['auth.User']"}),
+            'discoverable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'do_not_distribute': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'frozen': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'owner': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['auth.User']", 'unique': 'True'}),
+            'last_changed_by': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_changed'", 'null': 'True', 'to': u"orm['auth.User']"}),
+            'owners': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'owns'", 'symmetrical': 'False', 'to': u"orm['auth.User']"}),
             u'page_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['pages.Page']", 'unique': 'True', 'primary_key': 'True'}),
             'public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'published_and_frozen': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'resource_file': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'resource_url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'})
+            'resource_url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'genericresources'", 'to': u"orm['auth.User']"})
         },
         u'pages.page': {
             'Meta': {'ordering': "(u'titles',)", 'object_name': 'Page'},
