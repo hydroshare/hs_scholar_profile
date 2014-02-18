@@ -1,0 +1,35 @@
+From email from DT (feb 2014)
+Some comments/questions on your document.
+1.  What specific semantics are you suggesting for the terms "party", "person", "user"
+
+2.  How are you handling people that are and are not HS users.
+
+3.  I do not thing a HydroShare group should e an organization.
+    This gets a bit vague.  What about Google Groups, Google + Communities etc.
+    My thinking about organization is that it is just the affiliation a person
+    would put when saying the place they work, say at a conference or when publishing a paper.
+
+4.  I am not persuaded yet that we need the complexity of an organization type,
+   but am open to being persuaded if there are good reasons or examples.
+
+5.  The use tracking specification avoided keeping track of training in the system.
+   My thinking was that the training organizer would report attendees.  It may be possible to
+   have this automated in HydroShare, but lets try not get too complicated at the beginning.
+6.  Regarding authorship - we need to think carefully what information HydroShare stores
+   by reference, e.g. to a personid in a resource authorship field, or by copying the
+   content into the resource metadata.  My inclination is that information should be copied
+ into the resource metadata so that resources are complete if transferred out of HydroShare,
+  but that resource creation tools should allow a user to populate this content automatically
+   at a time the resource is being created or edited.  This will have the consequence that the
+    affiliation of a person who is an author may be the affiliation at the time the resource
+     is created, and not be updated if the person changes affiliation.
+      I think that this is the right thing to do.
+7.  Lets discuss the use case for user can have citations.  Is this a Hydro value added
+    functionality we want Hydroshare to support, or it this well handled by systems like
+    Research Gate, ORCID, and several others.  If we decide to handle it could we handle
+    this by a User Citation list being yet another type of resource that a user might
+    choose to create and manage in HydroShare.  This opens questions as to whether the
+    citations are resources in HydroShare, or resources that are referenced by hydroshare,
+    which means we have to have references to papers, documents etc be resources in Hydroshare.
+    Going down this path would seem to end with us being a complete bibliographic management system.
+    I do not think this is a space we want to get in to.  Many other systems do this already.
