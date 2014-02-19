@@ -10,11 +10,22 @@ __author__ = 'valentin'
 
 class PersonTest(TestCase):
     def setUp(self):
-        Person.objects.create(firstName="first", lastName="last", name="First Last")
+
+        Person.objects.create(givenName="first", familyName="last", name="First Last")
+        aPerson = Person.objects.create(givenName="last", familyName="first", name="last first")
+        OtherNames.objects.create(persons=aPerson, otherName="abcd", annotation="other")
+        OtherNames.objects.create(persons=aPerson, otherName="def", annotation="other")
 
     def test_Person(self):
-        org1 = Person.objects.get(lastName="last")
-        self.assertEqual(org1.otherName.count(), 0)
+        person1 = Person.objects.get(familyName="last")
+
+        self.assertEqual(person1.otherNames.count(), 0)
+
+        person2 = Person.objects.get(familyName="first")
+        self.assertEqual(person2.otherNames.count(),2)
+        self.assertEquals(person2.otherNames.get(otherName='def').annotation, 'other')
+
+
 
 
 pass

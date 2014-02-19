@@ -2,7 +2,7 @@ __author__ = 'valentin'
 
 from django.utils import unittest
 
-from hydroshare2.hs.hs_user_org.tests import personTest, testExternalOrgIdentifiers
+from hs.hs_user_org.tests import personTest, testExternalOrgIdentifiers, organizationTest
 from test import *
 from testExternalOrgIdentifiers import  *
 
@@ -11,6 +11,6 @@ def suite():
     test_suites = []
     test_suites.append(tests_loader(testExternalOrgIdentifiers))
     test_suites.append(tests_loader(personTest))
-
+    test_suites.append(tests_loader(personTest))
     return unittest.TestSuite(test_suites)
 
