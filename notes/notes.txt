@@ -1,3 +1,10 @@
+geek questions:
+Can I edit related items from a Page, or do they need to be a page
+
+Is the hydroshare user a page...
+
+quick way to create a page from a model (some scaffold command, like manage.py schemamigration )
+=========
 From email from DT (feb 2014)
 Some comments/questions on your document.
 1.  What specific semantics are you suggesting for the terms "party", "person", "user"

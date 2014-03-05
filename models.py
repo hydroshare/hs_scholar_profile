@@ -15,14 +15,14 @@ from hs_core.models import AbstractResource
 
 User and Organization Hierarchy
 
-Party
+PartyModel
 |- Organizations
        Includes a Organization Type property
 |- Group
    includes a GroupType
-   |- hydroshareGroup
+   |- ResearchGroup (disabled, model design issue)
 |- People
-   |- HydroshareUser
+   |- ResearchUser
        user field contains Django User Properties
 
 ExternalIdentifiers
@@ -50,20 +50,50 @@ class PartyLocation(models.Model):
     officePhone = models.CharField(verbose_name="Office or main phone number", blank=True,max_length='30')
     faxPhone = models.CharField(verbose_name="fax phone", blank=True,max_length='30')
 
-class Party(models.Model):
+
+class PartyGeolocation(models.Model):
+    name = models.CharField(max_length=100)
+    geonamesUrl = models.URLField(verbose_name="URL of Geonames reference")
+    # add geolocation
+    class Meta:
+        abstract = True
+
+class City(PartyGeolocation):
+    def __init__(self, *args, **kwargs):
+        super(City, self).__init__(*args, **kwargs)
+        City._meta.get_field('name').verbose_name ="City"
+
+    pass
+
+class Region(PartyGeolocation):
+    def __init__(self, *args, **kwargs):
+        super(Region, self).__init__(*args, **kwargs)
+        Region._meta.get_field('name').verbose_name ="State or Region"
+
+    pass
+
+class Country(PartyGeolocation):
+    def __init__(self, *args, **kwargs):
+        super(Country, self).__init__(*args, **kwargs)
+        Country._meta.get_field('name').verbose_name ="Country"
+
+    pass
+
+
+class PartyModel(models.Model):
     #ID = models.AutoField(primary_key=True )
     # not fully sure how to use name. USGS uses distinct LDAP Id's here.
-    name = models.CharField(verbose_name="A unique name for the record", help_text="Name of party (org or person)",max_length='255')
-    creditName = models.CharField(verbose_name="An optional label to display instead of the record name.", blank=True,max_length='255')
+    # change to uniqueID
+    uniqueCode = models.CharField(verbose_name="A unique name for the record", help_text="Name of party (org or person)",max_length='255')
+    name = models.CharField(verbose_name="Full name of Organization or Person", blank=True,max_length='255')
     url = models.URLField(verbose_name="Web Page of Organization or Person", blank=True,max_length='255')
     email = models.EmailField(verbose_name="Contact Email address of Organization or Person", blank=True,max_length='255')
-    description = models.TextField(verbose_name="", blank=True)
-    #otherNames = models.ForeignKey(OtherNames, null=True )  # alias in sciencebase
+    # is a description on Page, which Person, Organization, and Group inherit from
+    #description = models.TextField(verbose_name="Detailed description of Organization or Biography of a Person", blank=True)
     primaryLocation = models.ForeignKey(PartyLocation, null=True)
     notes = models.TextField(blank=True)
     createdDate = models.DateField(auto_now_add=True)
     lastUpdate = models.DateField(auto_now=True)
-    #groups = models.ForeignKey(to=Group, related_name="parties")
 
     class Meta:
         abstract = True
@@ -76,7 +106,7 @@ class Party(models.Model):
 # PERSON
 # note: Hydroshare User is near end of document
 #======================================================================================
-class Person(Party):
+class PersonModel(PartyModel):
     givenName = models.CharField(max_length='125') # given+family =name of party needs to be 255
     familyName = models.CharField(max_length='125') # given+family =name of party needs to be 255
     jobTitle = models.CharField(max_length='100')
@@ -88,14 +118,20 @@ class Person(Party):
     # do we want some adviser field.
 
     def __init__(self, *args, **kwargs):
-        super(Person, self).__init__(*args, **kwargs)
+        super(PersonModel, self).__init__(*args, **kwargs)
         if self.givenName is not None and self.familyName is not None:
-            self.name = self.givenName + self.familyName
+            self.name = self.givenName + ' ' + self.familyName
+
+    class Meta:
+        abstract = True
+
+class Person(Page, PersonModel):
+    def __init__(self, *args, **kwargs):
+        super(Person, self).__init__(*args, **kwargs)
+    pass
 
 
-
-
-PERSON_TYPES_CHOICES = (
+USER_TYPES_CHOICES = (
     ("faculty", "University Faculty" )
     , ("research", "University Professional or Research Staff")
     , ("postdoc", "Post-Doctoral Fellow")
@@ -112,34 +148,30 @@ PERSON_TYPES_CHOICES = (
 )
 
 
-class PersonKeywords(models.Model):
+class UserKeywords(models.Model):
+    person = models.ForeignKey(Person, related_name="keywords")
     keyword = models.CharField(max_length='100')
     createdDate = models.DateField(auto_now_add=True)
     pass
 
 
-class PersonDemographics(models.Model):
+class UserDemographics(models.Model):
     '''
     This separates the demographics needed by the research project from the user, has a permission
     Allows for Demographics to be optional
     '''
     public = models.BooleanField(default=False, verbose_name="Make My Demographics Public",
                                  help_text="My Demographics are Public")
-    personType = models.CharField(choices=PERSON_TYPES_CHOICES,max_length='255')
-    AGE_CHOICES = (("under_17", "you age is Under 17")
-                   , ("18_29", "you are between 18-29")
-                   , ("30_39", "you are between 30-39")
-                   , ("40_49", "you are between 40-49")
-                   , ("51_59", "you are between 50-59")
-                   , ("over_60", "you are over 60")
-    )
-    age = models.CharField(max_length=8, choices=AGE_CHOICES)
-    keywords = models.ForeignKey(PersonKeywords)
+    userType = models.CharField(choices=USER_TYPES_CHOICES,max_length='255')
+    #keywords = models.ForeignKey(UserKeywords) many to one
+    city = models.ForeignKey(City, null=True)
+    region = models.ForeignKey(Region, null=True)
+    country = models.ForeignKey(Country, null=True)
     pass
 
 class OtherNames(models.Model):
     #ID = models.AutoField(primary_key=True)
-    # relation will show in Party as otherNames
+    # relation will show in PartyModel as otherNames
     persons = models.ForeignKey(to=Person,related_name='otherNames' )
     otherName = models.CharField(verbose_name="Other Name or alias",max_length='255')
     ANNOTATION_TYPE_CHOICE = (
@@ -152,29 +184,42 @@ class OtherNames(models.Model):
 #=======================================================================================
 # ORGANIZATION
 # ======================================================================================
+# make consistent with CUAHSI
 ORG_TYPES_CHOICES = (
     ("commercial", "Commercial/Professional")
+    , ("university","University")
+    , ("college", "College")
     , ("gov", "Government Organization")
     , ("nonprofit", "Non-profit Organization")
     , ("k12", "School  Kindergarten to 12th Grade")
-    , ("ccCourse", "Community College ")
+    , ("cc", "Community College ")
     , ("other", "Other")
     , ("Unspecified", "Unspecified")
 )
 
-class Organization(Party):
-    persons = models.ManyToManyField(Person,through='Associations', null=True)
+class OrganizationModel(PartyModel):
     logoUrl = models.ImageField(blank=True, upload_to='orgLogos')
     #smallLogoUrl = models.ImageField()
     parentOrganization = models.ForeignKey('self', null=True)
     organizationType = models.CharField(choices=ORG_TYPES_CHOICES,max_length='14')
     # externalIdentifiers from ExternalOrgIdentifiers
 
+    def __unicode__(self):
+        return unicode(self.name)
+
+    class Meta:
+        abstract = True
+
+class Organization(Page, OrganizationModel):
+    persons = models.ManyToManyField(to=Person,through="OrgAssociations", null=True,related_name="organizations")
+    pass
+
 class ExternalOrgIdentifiers(models.Model):
     organization = models.ForeignKey(to=Organization, related_name='externalIdentifiers')
     IDENTIFIER_CHOICE = (
                          ("LOC", "Library of Congress")
                          , ("NSF", "National Science Foundation")
+                         , ("linked","linked Data URL")
                          , ("twitter", "twitterHandle")
                          , ("ProjectPage", "page for project")
                          , ("other", "other")
@@ -194,14 +239,14 @@ class ExternalOrgIdentifiers(models.Model):
 #     * Associations, which are person-org
 #     * adds Workshops (after requirement)
 ############################################################
-class Activities(models.Model):
+class ActivitiesModel(models.Model):
     '''
     this is a base class for users associated with
      Organizations (associations)
      Workshops
      Citations -- not yet implemented. should be separate
     '''
-    createdDate = models.DateField(auto_created=True)
+    createdDate = models.DateField(auto_now_add=True)
 
     class Meta:
         abstract = True
@@ -211,7 +256,7 @@ class Activities(models.Model):
 
 # http://support.orcid.org/knowledgebase/articles/151817-xml-for-affiliations
 
-class Associations(Activities):
+class OrgAssociations(ActivitiesModel):
     # object to handle a person being in one or more organizations
     organization = models.ForeignKey(Organization)
     person = models.ForeignKey(Person)
@@ -220,43 +265,64 @@ class Associations(Activities):
     jobTitle = models.CharField(verbose_name="Title", blank=True,max_length='100')
     presentOrganization = models.BooleanField(verbose_name="Presently with Organization", default=True,
                                               help_text="You are presently a member of this Organization")
-    pass
+
+    def __unicode__(self):
+        return u'%s %s' % (self.organization.name + self.person.name)
+
+# not a priority
+# class Workshops(ActivitiesModel):
+#     workshopName = models.CharField(max_length='255')
+#     beginDate = models.DateField(verbose_name="begin date of workshop")
+#     endDate = models.DateField(null=True, verbose_name="End date of workshop. Empty if one day")
+#
+#     pass
+
+class GroupModel(models.Model):
+    '''This is a collection of persons that is less formal than an organization.
 
 
-class Workshops(Activities):
-    workshopName = models.CharField(max_length='255')
-    beginDate = models.DateField(verbose_name="begin date of workshop")
-    endDate = models.DateField(null=True, verbose_name="End date of workshop. Empty if one day")
-
-    pass
-
-class Group(models.Model):
-    ''' Groups that users are associated with.
-
-    Note:
-      Done to differentiate virtual hydroshare groups from real organizations
     '''
+    # person/user left to specific implementations, since issues with model framework
+    # associations are object specific
+    # * general group has Persons (and subclass ResearchUser)
+    # * ResearchGroup has ResearchUsers only
+    #
     name = models.CharField(max_length='100')
     description = models.TextField()
-    GROUP_TYPES_CHOICES = (
-        ("hydroshare", "Generic Hydroshare Group"),
-        ("project", "Research Project"),
-        ("gradProject", "Project as part of a Thesis or Dissertation"),
-        ("gradCourse", "University Graduate Course"),
-        ("undergradCourse", "University Undergraduate Course"),
-        ("k12", "School Activity Kindergarten to 12th Grade"),
-        ("ccCourse", "Community College Course"),
-        ("other", "Other"),
-        ("Unspecified", "Unspecified")
-    )
-    groupType = models.CharField(choices=GROUP_TYPES_CHOICES,max_length='24')
-    createdDate = models.DateField(auto_created=True)
+    # Group purpose, open field
+    purpose = models.CharField(blank=True, verbose_name="Purpose - a Short description",
+                               help_text="Purpose - a several work description such as: Research Project",
+                               max_length=100)
+    # GROUP_TYPES_CHOICES = (
+    #     ("hydroshare", "Generic Hydroshare Group"),
+    #     ("project", "Research Project"),
+    #     ("gradProject", "Project as part of a Thesis or Dissertation"),
+    #     ("gradCourse", "University Graduate Course"),
+    #     ("undergradCourse", "University Undergraduate Course"),
+    #     ("k12", "School Activity Kindergarten to 12th Grade"),
+    #     ("ccCourse", "Community College Course"),
+    #     ("other", "Other"),
+    #     ("Unspecified", "Unspecified")
+    # )
+    # groupType = models.CharField(choices=GROUP_TYPES_CHOICES,max_length='24')
+    createdDate = models.DateField(auto_now_add=True)
 
     class Meta:
         abstract = True
 
+class GeneralGroup(Page,GroupModel):
+    persons = models.ManyToManyField(to=Person,through='GeneralGroupAssociations',related_name="groups+",)
+    pass
 
+class GeneralGroupAssociations(ActivitiesModel):
+    # object to handle a person being in one or more organizations
+    group = models.ForeignKey(GeneralGroup)
+    person = models.ForeignKey(Person)
+    beginDate = models.DateField(verbose_name="begin date of associate")
+    endDate = models.DateField(null=True, verbose_name="End date of association. Empty if still with organization")
+    title = models.CharField(verbose_name="Title or Responsibility", blank=True,max_length='100')
 
+    pass
 
 ##############################################################
 # HYDROSHARE SPECIFIC TYPES
@@ -268,7 +334,7 @@ class Group(models.Model):
 # USER Profile
 #=======================================
 
-class ExternalPartyIdentifiers(models.Model):
+class ExternalPersonIdentifiers(models.Model):
     IDENTIFIER_CHOICE = ( ("orcid", "ORCID Identifier")
                           , ("linkedin", "Linked In URL")
                           , ("VIVO", "VIVO Identifier")
@@ -278,6 +344,7 @@ class ExternalPartyIdentifiers(models.Model):
                           , ("blog", "blog or personal page")
                           , ("ProjectPage", "page for project")
                           , ("other", "other"))
+    person = models.ForeignKey(Person, related_name="externalIdentifiers")
     identifierName = models.CharField(choices=IDENTIFIER_CHOICE, verbose_name="User Identities",
                                       help_text="User identities from external sites",max_length='255')
     otherName = models.CharField(verbose_name="If other is selected, type of identifier", blank=True,max_length='255')
@@ -286,7 +353,7 @@ class ExternalPartyIdentifiers(models.Model):
     # validation needed. if identifierName =='other' then otherName must be populated.
 
 
-class ResearcherUrls(ExternalPartyIdentifiers):
+class ResearcherUrls(ExternalPersonIdentifiers):
     '''
     Separate Research ID from other identifiers.
     This will also allow for some validation process for these identifiers
@@ -295,51 +362,60 @@ class ResearcherUrls(ExternalPartyIdentifiers):
     Defined as a proxy class  of ExternalPartyIdentifiers, so the data is stored in the same table
     '''
     class Meta:
-        abstract = True
+        proxy = True
 
     pass
 
 
-class HydoshareUser(Person):
+class ResearchUser(PersonModel):
     user = models.OneToOneField("auth.user")
-    demographics = models.OneToOneField(PersonDemographics)
+    demographics = models.OneToOneField(UserDemographics)
     #orcidIdentifier = models.CharField();
-    externalIdentifiers = models.ForeignKey(ExternalPartyIdentifiers, null=True)
+    #externalIdentifiers = models.ForeignKey(ExternalPersonIdentifiers, null=True)
     # need a function to handle and store an orcid in external identifiers
     pass
 
-#===========================
-# groups
-#============================
-class HydroshareGroup(Group):
-    persons = models.ForeignKey(to=HydoshareUser, related_name='hydroshareGroups', null=True)
-    createdBy = models.ForeignKey(HydoshareUser)
+# #===========================
+# # researchGroups
+# disabled. Getting
+# CommandError: One or more models did not validate:
+# hs_user_org.researchgroup: 'persons' is a manually-defined m2m relation through model GroupAssociations, which does not have foreign keys to Person and ResearchGroup
 
-    # def __init__(self, *args, **kwargs):
-    #     self._meta.get_field('groupType').default = 'hydroshare'
-    #     super(HydroshareGroup, self).__init__(*args, **kwargs)
+# #============================
+#
+# class ResearchGroup(Page, Group):
+#     users = models.ManyToManyField(to=ResearchUser, through='ResearchGroupAssociations', null=True, related_name='research_groups')
+#     createdBy = models.ForeignKey(ResearchUser, related_name="groups_created")
+#
+#
+#     # def __init__(self, *args, **kwargs):
+#     #     super(HydroshareGroup, self).__init__(*args, **kwargs)
+#     #     self.groupType = 'hydroshare'
+#
+#
+#     pass
+#     # need to set organizationType to Hydroshare
+#
+# class ResearchGroupAssociations(ActivitiesModel):
+#     # object to handle a person being in one or more organizations
+#     hydroshareGroup = models.ForeignKey(ResearchGroup)
+#     user = models.ForeignKey(ResearchUser)
+#     beginDate = models.DateField(verbose_name="begin date of associate")
+#     endDate = models.DateField(null=True, verbose_name="End date of association. Empty if still with organization")
+#     title = models.CharField(verbose_name="Title or Responsibility", blank=True,max_length='100')
+#
+#     pass
 
-    def __init__(self, *args, **kwargs):
-        super(HydroshareGroup, self).__init__(*args, **kwargs)
-        self.groupType = 'hydroshare'
 
-
-    pass
-    # need to set organizationType to Hydroshare
-
-
-class HydroshareWorkshop(Workshops, Group):
-    ''' Multiple inheritance?
-    '''
-    pass
 
 ############################################################
 # DJANGO OPTIONS
+# Goes in settings.py
 ############################################################
-AUTH_PROFILE_MODULE = "hs.hs_user_org.HydoshareUser"
-
-ACCOUNTS_PROFILE_FORM_EXCLUDE_FIELDS = (
-    "lastUpdate",
-    "createdDate",
-)
+# AUTH_PROFILE_MODULE = "hs.hs_user_org.ResearchUser"
+#
+# ACCOUNTS_PROFILE_FORM_EXCLUDE_FIELDS = (
+#     "lastUpdate",
+#     "createdDate",
+# )
 
