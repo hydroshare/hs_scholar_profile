@@ -288,7 +288,7 @@ class GroupModel(models.Model):
     # * ResearchGroup has ResearchUsers only
     #
     name = models.CharField(max_length='100')
-    description = models.TextField()
+    groupDescription = models.TextField()
     # Group purpose, open field
     purpose = models.CharField(blank=True, verbose_name="Purpose - a Short description",
                                help_text="Purpose - a several work description such as: Research Project",
