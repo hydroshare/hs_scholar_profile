@@ -4,8 +4,8 @@
 {% block main %}
     {% set_page_permissions page %}
    <div class='row'>
-    {% editable page.researchuser.content %}
-       {{ page.researchuser.content|safe|richtext_filters }}
+    {% editable page.scholar.content %}
+       {{ page.scholar.content|safe|richtext_filters }}
     {% endeditable %}
    </div>
 {% endblock %}

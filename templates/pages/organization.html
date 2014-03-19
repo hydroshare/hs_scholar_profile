@@ -6,6 +6,8 @@
    <div class='row'>
     {% editable page.organization.content %}
        {{ page.organization.content|safe|richtext_filters }}
+        {{ page.persons.content|safe|richtext_filters }}
     {% endeditable %}
    </div>
+
 {% endblock %}

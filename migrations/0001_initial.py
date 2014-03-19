@@ -8,16 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'PartyLocation'
-        db.create_table(u'hs_user_org_partylocation', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('mailAddress', self.gf('django.db.models.fields.TextField')()),
-            ('streetAddress', self.gf('django.db.models.fields.TextField')(blank=True)),
-            ('officePhone', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
-            ('faxPhone', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
-        ))
-        db.send_create_signal(u'hs_user_org', ['PartyLocation'])
-
         # Adding model 'City'
         db.create_table(u'hs_user_org_city', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -46,19 +36,43 @@ class Migration(SchemaMigration):
         db.create_table(u'hs_user_org_person', (
             (u'page_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['pages.Page'], unique=True, primary_key=True)),
             ('uniqueCode', self.gf('django.db.models.fields.CharField')(max_length='255')),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length='255', blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length='255')),
             ('url', self.gf('django.db.models.fields.URLField')(max_length='255', blank=True)),
-            ('email', self.gf('django.db.models.fields.EmailField')(max_length='255', blank=True)),
-            ('primaryLocation', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.PartyLocation'], null=True)),
             ('notes', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
             ('lastUpdate', self.gf('django.db.models.fields.DateField')(auto_now=True, blank=True)),
             ('givenName', self.gf('django.db.models.fields.CharField')(max_length='125')),
             ('familyName', self.gf('django.db.models.fields.CharField')(max_length='125')),
             ('jobTitle', self.gf('django.db.models.fields.CharField')(max_length='100')),
-            ('cellPhone', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
         ))
         db.send_create_signal(u'hs_user_org', ['Person'])
+
+        # Adding model 'PersonEmail'
+        db.create_table(u'hs_user_org_personemail', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('phone_number', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
+            ('phone_type', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
+            ('person', self.gf('django.db.models.fields.related.ForeignKey')(related_name='email_addresses', to=orm['hs_user_org.Person'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['PersonEmail'])
+
+        # Adding model 'PersonLocation'
+        db.create_table(u'hs_user_org_personlocation', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('address', self.gf('django.db.models.fields.TextField')()),
+            ('address_type', self.gf('django.db.models.fields.CharField')(max_length=24)),
+            ('person', self.gf('django.db.models.fields.related.ForeignKey')(related_name='mail_addresses', to=orm['hs_user_org.Person'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['PersonLocation'])
+
+        # Adding model 'PersonPhone'
+        db.create_table(u'hs_user_org_personphone', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('phone_number', self.gf('django.db.models.fields.CharField')(max_length='30')),
+            ('phone_type', self.gf('django.db.models.fields.CharField')(max_length='30')),
+            ('person', self.gf('django.db.models.fields.related.ForeignKey')(related_name='phone_numbers', to=orm['hs_user_org.Person'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['PersonPhone'])
 
         # Adding model 'UserKeywords'
         db.create_table(u'hs_user_org_userkeywords', (
@@ -93,10 +107,8 @@ class Migration(SchemaMigration):
         db.create_table(u'hs_user_org_organization', (
             (u'page_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['pages.Page'], unique=True, primary_key=True)),
             ('uniqueCode', self.gf('django.db.models.fields.CharField')(max_length='255')),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length='255', blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length='255')),
             ('url', self.gf('django.db.models.fields.URLField')(max_length='255', blank=True)),
-            ('email', self.gf('django.db.models.fields.EmailField')(max_length='255', blank=True)),
-            ('primaryLocation', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.PartyLocation'], null=True)),
             ('notes', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
             ('lastUpdate', self.gf('django.db.models.fields.DateField')(auto_now=True, blank=True)),
@@ -105,6 +117,33 @@ class Migration(SchemaMigration):
             ('organizationType', self.gf('django.db.models.fields.CharField')(max_length='14')),
         ))
         db.send_create_signal(u'hs_user_org', ['Organization'])
+
+        # Adding model 'OrganizationEmail'
+        db.create_table(u'hs_user_org_organizationemail', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('phone_number', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
+            ('phone_type', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
+            ('organization', self.gf('django.db.models.fields.related.ForeignKey')(related_name='email_addresses', to=orm['hs_user_org.Organization'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['OrganizationEmail'])
+
+        # Adding model 'OrganizationLocation'
+        db.create_table(u'hs_user_org_organizationlocation', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('address', self.gf('django.db.models.fields.TextField')()),
+            ('address_type', self.gf('django.db.models.fields.CharField')(max_length=24)),
+            ('organization', self.gf('django.db.models.fields.related.ForeignKey')(related_name='mail_addresses', to=orm['hs_user_org.Organization'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['OrganizationLocation'])
+
+        # Adding model 'OrganizationPhone'
+        db.create_table(u'hs_user_org_organizationphone', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('phone_number', self.gf('django.db.models.fields.CharField')(max_length='30')),
+            ('phone_type', self.gf('django.db.models.fields.CharField')(max_length='30')),
+            ('organization', self.gf('django.db.models.fields.related.ForeignKey')(related_name='phone_numbers', to=orm['hs_user_org.Organization'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['OrganizationPhone'])
 
         # Adding model 'ExternalOrgIdentifiers'
         db.create_table(u'hs_user_org_externalorgidentifiers', (
@@ -130,64 +169,57 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'hs_user_org', ['OrgAssociations'])
 
-        # Adding model 'GeneralGroup'
-        db.create_table(u'hs_user_org_generalgroup', (
-            (u'page_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['pages.Page'], unique=True, primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length='100')),
-            ('groupDescription', self.gf('django.db.models.fields.TextField')()),
-            ('purpose', self.gf('django.db.models.fields.CharField')(max_length=100, blank=True)),
-            ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
-        ))
-        db.send_create_signal(u'hs_user_org', ['GeneralGroup'])
-
-        # Adding model 'GeneralGroupAssociations'
-        db.create_table(u'hs_user_org_generalgroupassociations', (
+        # Adding model 'ExternalIdentifiers'
+        db.create_table(u'hs_user_org_externalidentifiers', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
-            ('group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.GeneralGroup'])),
-            ('person', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.Person'])),
-            ('beginDate', self.gf('django.db.models.fields.DateField')()),
-            ('endDate', self.gf('django.db.models.fields.DateField')(null=True)),
-            ('title', self.gf('django.db.models.fields.CharField')(max_length='100', blank=True)),
-        ))
-        db.send_create_signal(u'hs_user_org', ['GeneralGroupAssociations'])
-
-        # Adding model 'ExternalPersonIdentifiers'
-        db.create_table(u'hs_user_org_externalpersonidentifiers', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('person', self.gf('django.db.models.fields.related.ForeignKey')(related_name='externalIdentifiers', to=orm['hs_user_org.Person'])),
             ('identifierName', self.gf('django.db.models.fields.CharField')(max_length='255')),
             ('otherName', self.gf('django.db.models.fields.CharField')(max_length='255', blank=True)),
             ('identifierCode', self.gf('django.db.models.fields.CharField')(max_length='24')),
             ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
         ))
-        db.send_create_signal(u'hs_user_org', ['ExternalPersonIdentifiers'])
+        db.send_create_signal(u'hs_user_org', ['ExternalIdentifiers'])
 
-        # Adding model 'ResearchUser'
-        db.create_table(u'hs_user_org_researchuser', (
+        # Adding model 'Scholar'
+        db.create_table(u'hs_user_org_scholar', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('uniqueCode', self.gf('django.db.models.fields.CharField')(max_length='255')),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length='255', blank=True)),
-            ('url', self.gf('django.db.models.fields.URLField')(max_length='255', blank=True)),
-            ('email', self.gf('django.db.models.fields.EmailField')(max_length='255', blank=True)),
-            ('primaryLocation', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.PartyLocation'], null=True)),
-            ('notes', self.gf('django.db.models.fields.TextField')(blank=True)),
-            ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
-            ('lastUpdate', self.gf('django.db.models.fields.DateField')(auto_now=True, blank=True)),
-            ('givenName', self.gf('django.db.models.fields.CharField')(max_length='125')),
-            ('familyName', self.gf('django.db.models.fields.CharField')(max_length='125')),
-            ('jobTitle', self.gf('django.db.models.fields.CharField')(max_length='100')),
-            ('cellPhone', self.gf('django.db.models.fields.CharField')(max_length='30', blank=True)),
             ('user', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True)),
-            ('demographics', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['hs_user_org.UserDemographics'], unique=True)),
+            ('person', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['hs_user_org.Person'], unique=True)),
+            ('demographics', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.UserDemographics'], null=True)),
         ))
-        db.send_create_signal(u'hs_user_org', ['ResearchUser'])
+        db.send_create_signal(u'hs_user_org', ['Scholar'])
+
+        # Adding model 'ScholarExternalIdentifiers'
+        db.create_table(u'hs_user_org_scholarexternalidentifiers', (
+            (u'externalidentifiers_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['hs_user_org.ExternalIdentifiers'], unique=True, primary_key=True)),
+            ('scholar', self.gf('django.db.models.fields.related.ForeignKey')(related_name='external_identifiers', to=orm['hs_user_org.Scholar'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['ScholarExternalIdentifiers'])
+
+        # Adding model 'ScholarGroup'
+        db.create_table(u'hs_user_org_scholargroup', (
+            (u'page_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['pages.Page'], unique=True, primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length='100')),
+            ('groupDescription', self.gf('django.db.models.fields.TextField')()),
+            ('purpose', self.gf('django.db.models.fields.CharField')(max_length=100, blank=True)),
+            ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
+            ('createdBy', self.gf('django.db.models.fields.related.OneToOneField')(related_name='creator_of', unique=True, to=orm['hs_user_org.Scholar'])),
+        ))
+        db.send_create_signal(u'hs_user_org', ['ScholarGroup'])
+
+        # Adding model 'ScholarGroupAssociations'
+        db.create_table(u'hs_user_org_scholargroupassociations', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('createdDate', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
+            ('group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.ScholarGroup'])),
+            ('scholar', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['hs_user_org.Scholar'])),
+            ('beginDate', self.gf('django.db.models.fields.DateField')()),
+            ('endDate', self.gf('django.db.models.fields.DateField')(null=True)),
+            ('title', self.gf('django.db.models.fields.CharField')(max_length='100', blank=True)),
+        ))
+        db.send_create_signal(u'hs_user_org', ['ScholarGroupAssociations'])
 
 
     def backwards(self, orm):
-        # Deleting model 'PartyLocation'
-        db.delete_table(u'hs_user_org_partylocation')
-
         # Deleting model 'City'
         db.delete_table(u'hs_user_org_city')
 
@@ -199,6 +231,15 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Person'
         db.delete_table(u'hs_user_org_person')
+
+        # Deleting model 'PersonEmail'
+        db.delete_table(u'hs_user_org_personemail')
+
+        # Deleting model 'PersonLocation'
+        db.delete_table(u'hs_user_org_personlocation')
+
+        # Deleting model 'PersonPhone'
+        db.delete_table(u'hs_user_org_personphone')
 
         # Deleting model 'UserKeywords'
         db.delete_table(u'hs_user_org_userkeywords')
@@ -212,23 +253,35 @@ class Migration(SchemaMigration):
         # Deleting model 'Organization'
         db.delete_table(u'hs_user_org_organization')
 
+        # Deleting model 'OrganizationEmail'
+        db.delete_table(u'hs_user_org_organizationemail')
+
+        # Deleting model 'OrganizationLocation'
+        db.delete_table(u'hs_user_org_organizationlocation')
+
+        # Deleting model 'OrganizationPhone'
+        db.delete_table(u'hs_user_org_organizationphone')
+
         # Deleting model 'ExternalOrgIdentifiers'
         db.delete_table(u'hs_user_org_externalorgidentifiers')
 
         # Deleting model 'OrgAssociations'
         db.delete_table(u'hs_user_org_orgassociations')
 
-        # Deleting model 'GeneralGroup'
-        db.delete_table(u'hs_user_org_generalgroup')
+        # Deleting model 'ExternalIdentifiers'
+        db.delete_table(u'hs_user_org_externalidentifiers')
 
-        # Deleting model 'GeneralGroupAssociations'
-        db.delete_table(u'hs_user_org_generalgroupassociations')
+        # Deleting model 'Scholar'
+        db.delete_table(u'hs_user_org_scholar')
 
-        # Deleting model 'ExternalPersonIdentifiers'
-        db.delete_table(u'hs_user_org_externalpersonidentifiers')
+        # Deleting model 'ScholarExternalIdentifiers'
+        db.delete_table(u'hs_user_org_scholarexternalidentifiers')
 
-        # Deleting model 'ResearchUser'
-        db.delete_table(u'hs_user_org_researchuser')
+        # Deleting model 'ScholarGroup'
+        db.delete_table(u'hs_user_org_scholargroup')
+
+        # Deleting model 'ScholarGroupAssociations'
+        db.delete_table(u'hs_user_org_scholargroupassociations')
 
 
     models = {
@@ -280,6 +333,14 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
+        u'hs_user_org.externalidentifiers': {
+            'Meta': {'object_name': 'ExternalIdentifiers'},
+            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'identifierCode': ('django.db.models.fields.CharField', [], {'max_length': "'24'"}),
+            'identifierName': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
+            'otherName': ('django.db.models.fields.CharField', [], {'max_length': "'255'", 'blank': 'True'})
+        },
         u'hs_user_org.externalorgidentifiers': {
             'Meta': {'object_name': 'ExternalOrgIdentifiers'},
             'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -289,49 +350,40 @@ class Migration(SchemaMigration):
             'organization': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'externalIdentifiers'", 'to': u"orm['hs_user_org.Organization']"}),
             'otherName': ('django.db.models.fields.CharField', [], {'max_length': "'255'", 'blank': 'True'})
         },
-        u'hs_user_org.externalpersonidentifiers': {
-            'Meta': {'object_name': 'ExternalPersonIdentifiers'},
-            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifierCode': ('django.db.models.fields.CharField', [], {'max_length': "'24'"}),
-            'identifierName': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
-            'otherName': ('django.db.models.fields.CharField', [], {'max_length': "'255'", 'blank': 'True'}),
-            'person': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'externalIdentifiers'", 'to': u"orm['hs_user_org.Person']"})
-        },
-        u'hs_user_org.generalgroup': {
-            'Meta': {'ordering': "(u'_order',)", 'object_name': 'GeneralGroup', '_ormbases': [u'pages.Page']},
-            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'groupDescription': ('django.db.models.fields.TextField', [], {}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': "'100'"}),
-            u'page_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['pages.Page']", 'unique': 'True', 'primary_key': 'True'}),
-            'persons': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'groups+'", 'symmetrical': 'False', 'through': u"orm['hs_user_org.GeneralGroupAssociations']", 'to': u"orm['hs_user_org.Person']"}),
-            'purpose': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'})
-        },
-        u'hs_user_org.generalgroupassociations': {
-            'Meta': {'object_name': 'GeneralGroupAssociations'},
-            'beginDate': ('django.db.models.fields.DateField', [], {}),
-            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'endDate': ('django.db.models.fields.DateField', [], {'null': 'True'}),
-            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.GeneralGroup']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'person': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.Person']"}),
-            'title': ('django.db.models.fields.CharField', [], {'max_length': "'100'", 'blank': 'True'})
-        },
         u'hs_user_org.organization': {
             'Meta': {'ordering': "(u'_order',)", 'object_name': 'Organization', '_ormbases': [u'pages.Page']},
             'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': "'255'", 'blank': 'True'}),
             'lastUpdate': ('django.db.models.fields.DateField', [], {'auto_now': 'True', 'blank': 'True'}),
             'logoUrl': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'blank': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': "'255'", 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
             'notes': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'organizationType': ('django.db.models.fields.CharField', [], {'max_length': "'14'"}),
             u'page_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['pages.Page']", 'unique': 'True', 'primary_key': 'True'}),
             'parentOrganization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.Organization']", 'null': 'True'}),
             'persons': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "'organizations'", 'null': 'True', 'through': u"orm['hs_user_org.OrgAssociations']", 'to': u"orm['hs_user_org.Person']"}),
-            'primaryLocation': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.PartyLocation']", 'null': 'True'}),
             'uniqueCode': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': "'255'", 'blank': 'True'})
+        },
+        u'hs_user_org.organizationemail': {
+            'Meta': {'object_name': 'OrganizationEmail'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'email_addresses'", 'to': u"orm['hs_user_org.Organization']"}),
+            'phone_number': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'}),
+            'phone_type': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'})
+        },
+        u'hs_user_org.organizationlocation': {
+            'Meta': {'object_name': 'OrganizationLocation'},
+            'address': ('django.db.models.fields.TextField', [], {}),
+            'address_type': ('django.db.models.fields.CharField', [], {'max_length': '24'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'mail_addresses'", 'to': u"orm['hs_user_org.Organization']"})
+        },
+        u'hs_user_org.organizationphone': {
+            'Meta': {'object_name': 'OrganizationPhone'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'phone_numbers'", 'to': u"orm['hs_user_org.Organization']"}),
+            'phone_number': ('django.db.models.fields.CharField', [], {'max_length': "'30'"}),
+            'phone_type': ('django.db.models.fields.CharField', [], {'max_length': "'30'"})
         },
         u'hs_user_org.orgassociations': {
             'Meta': {'object_name': 'OrgAssociations'},
@@ -351,29 +403,39 @@ class Migration(SchemaMigration):
             'otherName': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
             'persons': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'otherNames'", 'to': u"orm['hs_user_org.Person']"})
         },
-        u'hs_user_org.partylocation': {
-            'Meta': {'object_name': 'PartyLocation'},
-            'faxPhone': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'mailAddress': ('django.db.models.fields.TextField', [], {}),
-            'officePhone': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'}),
-            'streetAddress': ('django.db.models.fields.TextField', [], {'blank': 'True'})
-        },
         u'hs_user_org.person': {
             'Meta': {'ordering': "(u'_order',)", 'object_name': 'Person', '_ormbases': [u'pages.Page']},
-            'cellPhone': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'}),
             'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': "'255'", 'blank': 'True'}),
             'familyName': ('django.db.models.fields.CharField', [], {'max_length': "'125'"}),
             'givenName': ('django.db.models.fields.CharField', [], {'max_length': "'125'"}),
             'jobTitle': ('django.db.models.fields.CharField', [], {'max_length': "'100'"}),
             'lastUpdate': ('django.db.models.fields.DateField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': "'255'", 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
             'notes': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             u'page_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['pages.Page']", 'unique': 'True', 'primary_key': 'True'}),
-            'primaryLocation': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.PartyLocation']", 'null': 'True'}),
             'uniqueCode': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': "'255'", 'blank': 'True'})
+        },
+        u'hs_user_org.personemail': {
+            'Meta': {'object_name': 'PersonEmail'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'person': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'email_addresses'", 'to': u"orm['hs_user_org.Person']"}),
+            'phone_number': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'}),
+            'phone_type': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'})
+        },
+        u'hs_user_org.personlocation': {
+            'Meta': {'object_name': 'PersonLocation'},
+            'address': ('django.db.models.fields.TextField', [], {}),
+            'address_type': ('django.db.models.fields.CharField', [], {'max_length': '24'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'person': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'mail_addresses'", 'to': u"orm['hs_user_org.Person']"})
+        },
+        u'hs_user_org.personphone': {
+            'Meta': {'object_name': 'PersonPhone'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'person': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'phone_numbers'", 'to': u"orm['hs_user_org.Person']"}),
+            'phone_number': ('django.db.models.fields.CharField', [], {'max_length': "'30'"}),
+            'phone_type': ('django.db.models.fields.CharField', [], {'max_length': "'30'"})
         },
         u'hs_user_org.region': {
             'Meta': {'object_name': 'Region'},
@@ -381,23 +443,37 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        u'hs_user_org.researchuser': {
-            'Meta': {'object_name': 'ResearchUser'},
-            'cellPhone': ('django.db.models.fields.CharField', [], {'max_length': "'30'", 'blank': 'True'}),
-            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'demographics': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['hs_user_org.UserDemographics']", 'unique': 'True'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': "'255'", 'blank': 'True'}),
-            'familyName': ('django.db.models.fields.CharField', [], {'max_length': "'125'"}),
-            'givenName': ('django.db.models.fields.CharField', [], {'max_length': "'125'"}),
+        u'hs_user_org.scholar': {
+            'Meta': {'object_name': 'Scholar'},
+            'demographics': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.UserDemographics']", 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'jobTitle': ('django.db.models.fields.CharField', [], {'max_length': "'100'"}),
-            'lastUpdate': ('django.db.models.fields.DateField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': "'255'", 'blank': 'True'}),
-            'notes': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'primaryLocation': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.PartyLocation']", 'null': 'True'}),
-            'uniqueCode': ('django.db.models.fields.CharField', [], {'max_length': "'255'"}),
-            'url': ('django.db.models.fields.URLField', [], {'max_length': "'255'", 'blank': 'True'}),
+            'person': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['hs_user_org.Person']", 'unique': 'True'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['auth.User']", 'unique': 'True'})
+        },
+        u'hs_user_org.scholarexternalidentifiers': {
+            'Meta': {'object_name': 'ScholarExternalIdentifiers', '_ormbases': [u'hs_user_org.ExternalIdentifiers']},
+            u'externalidentifiers_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['hs_user_org.ExternalIdentifiers']", 'unique': 'True', 'primary_key': 'True'}),
+            'scholar': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'external_identifiers'", 'to': u"orm['hs_user_org.Scholar']"})
+        },
+        u'hs_user_org.scholargroup': {
+            'Meta': {'ordering': "(u'_order',)", 'object_name': 'ScholarGroup', '_ormbases': [u'pages.Page']},
+            'createdBy': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'creator_of'", 'unique': 'True', 'to': u"orm['hs_user_org.Scholar']"}),
+            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'groupDescription': ('django.db.models.fields.TextField', [], {}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': "'100'"}),
+            u'page_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['pages.Page']", 'unique': 'True', 'primary_key': 'True'}),
+            'persons': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'groups'", 'symmetrical': 'False', 'through': u"orm['hs_user_org.ScholarGroupAssociations']", 'to': u"orm['hs_user_org.Scholar']"}),
+            'purpose': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'})
+        },
+        u'hs_user_org.scholargroupassociations': {
+            'Meta': {'object_name': 'ScholarGroupAssociations'},
+            'beginDate': ('django.db.models.fields.DateField', [], {}),
+            'createdDate': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'endDate': ('django.db.models.fields.DateField', [], {'null': 'True'}),
+            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.ScholarGroup']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'scholar': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['hs_user_org.Scholar']"}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': "'100'", 'blank': 'True'})
         },
         u'hs_user_org.userdemographics': {
             'Meta': {'object_name': 'UserDemographics'},

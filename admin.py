@@ -1,36 +1,62 @@
 from copy import deepcopy
-from mezzanine.pages.admin import PageAdmin
-from django.contrib.gis import admin
+#from mezzanine.pages.admin import PageAdmin
+from mezzanine.core.admin import DisplayableAdmin, TabularDynamicInlineAdmin
+from django.contrib import admin
+from django.contrib.admin import ModelAdmin
+from django.forms import ModelForm
 from .models import *
 
-admin.site.register(Person, PageAdmin)
+
+
+class PersonInline(admin.TabularInline):
+    model = Person
+
 
 #####
 # Org
 # #####
 #person_extra_fieldsets = ((None, {"fields": ("dob",)}),)
 
-class OrgAssociationInline(admin.TabularInline):
-    model = Organization.persons.through
+class OrgInline (admin.TabularInline):
+    model = Organization
 
-class OrganizationAdmin(PageAdmin):
+
+class OrgAssociationInline(TabularDynamicInlineAdmin):
+    model = Organization.persons.through
+    extra = 1
+    inlines = (OrgInline)
+
+class OrganizationAdmin( ModelAdmin):
+    model = Organization
     inlines = (OrgAssociationInline,)
-    fieldsets = deepcopy(PageAdmin.fieldsets) #+ person_extra_fieldsets
+    #exclude = ('persons',)
+    #fieldsets = deepcopy(PageAdmin.fieldsets) #+ person_extra_fieldsets
+
+class PersonAdmin(ModelAdmin):
+    model = Person
+    #inlines = (OrgAssociationInline, OrgInline)
+    pass
 
 admin.site.register(Organization, OrganizationAdmin)
 
+admin.site.register(Person, PersonAdmin)
+
 #######
-# GeneralGroup
+# ScholarlGroup
 ##############
 
-class GroupAssociationInline(admin.TabularInline):
-    model = GeneralGroup.persons.through
+class ScholarAssociationInline(TabularDynamicInlineAdmin):
+    model = ScholarGroup.persons.through
 
-class GeneralGroupAdmin(PageAdmin):
-    inlines = (GroupAssociationInline,)
-    fieldsets = deepcopy(PageAdmin.fieldsets) #+ person_extra_fieldsets
 
-admin.site.register(GeneralGroup, PageAdmin) # opps abstract
+class ScholarGroupAdmin(ModelAdmin):
+    model = ScholarGroup
+    inlines = (ScholarAssociationInline,)
+    #fieldsets = deepcopy(PageAdmin.fieldsets) #+ person_extra_fieldsets
 
-#admin.site.register(ResearchUser, PageAdmin) this is a user profile
+admin.site.register(ScholarGroup, ScholarGroupAdmin) # opps abstract
+
+
+admin.site.register(Scholar, DisplayableAdmin) #this is a user profile
+
 
