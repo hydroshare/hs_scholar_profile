@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 #from django_webtest import WebTest
-from hs.hs_user_org.models import Organization, Person, OtherNames
+from ..models import Organization, Person, OtherNames
 
 
 
@@ -10,7 +10,6 @@ __author__ = 'valentin'
 
 class PersonTest(TestCase):
     def setUp(self):
-
         Person.objects.create(givenName="first", familyName="last", name="First Last")
         aPerson = Person.objects.create(givenName="last", familyName="first", name="last first")
         bPerson = Person.objects.create(givenName="1", familyName="2")

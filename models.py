@@ -1,9 +1,10 @@
 from django.contrib.contenttypes import generic
 from django.contrib.auth.models import User, Group
 from django.db import models
-from mezzanine.pages.models import Page,Displayable, RichText
+from mezzanine.pages.models import Page, RichText,Displayable
 from mezzanine.core.models import Ownable
 from hs_core.models import AbstractResource
+from django.db.models.signals import  post_save
 
 # user content models to handle organizations and people
 # modeled after
@@ -134,6 +135,39 @@ class PartyModel(models.Model):
 
 
 
+#=======================================================================================
+# ORGANIZATION
+# ======================================================================================
+# make consistent with CUAHSI
+
+class OrganizationModel(PartyModel):
+    ORG_TYPES_CHOICES = (
+    ("commercial", "Commercial/Professional")
+    , ("university","University")
+    , ("college", "College")
+    , ("gov", "Government Organization")
+    , ("nonprofit", "Non-profit Organization")
+    , ("k12", "School  Kindergarten to 12th Grade")
+    , ("cc", "Community College ")
+    , ("other", "Other")
+    , ("Unspecified", "Unspecified")
+    )
+    logoUrl = models.ImageField(blank=True, upload_to='orgLogos')
+    #smallLogoUrl = models.ImageField()
+    parentOrganization = models.ForeignKey('self', null=True,blank=True)
+    organizationType = models.CharField(choices=ORG_TYPES_CHOICES,max_length='14')
+    # externalIdentifiers from ExternalOrgIdentifiers
+
+    def __unicode__(self):
+        return unicode(self.name)
+
+    class Meta:
+        abstract = True
+
+
+class Organization(Displayable,OrganizationModel):
+    #persons = models.ManyToManyField(Person,through="OrgAssociations", null=True,related_name="organizations")
+    pass
 
 #======================================================================================
 # PERSON
@@ -145,10 +179,11 @@ class PersonModel(PartyModel):
     # fields from vcard.
     givenName = models.CharField(max_length='125') # given+family =name of party needs to be 255
     familyName = models.CharField(max_length='125') # given+family =name of party needs to be 255
-    jobTitle = models.CharField(max_length='100')
+    jobTitle = models.CharField(max_length='100', blank=True)
     # This makes a full org record required.
     # Should this be just a text field?
     #organization = models.ForeignKey(Organization, null=True) # one to many
+    organizations = models.ManyToManyField(Organization,through="OrgAssociations", null=True,related_name="%(app_label)s_%(class)s_members",symmetrical=True)
     #cellPhone = models.CharField(verbose_name="Cell Phone", blank=True,max_length='30')  # sciencebase
     #associations = models.ForeignKey(Associations, null=True) # one to many
     # do we want some adviser field.
@@ -163,21 +198,21 @@ class PersonModel(PartyModel):
 
 
 
-class Person(Displayable, PersonModel):
+class Person(Displayable,PersonModel):
     def __init__(self, *args, **kwargs):
         super(Person, self).__init__(*args, **kwargs)
     pass
 
 class PersonEmail(PartyEmailModel):
-    person = models.ForeignKey(to=Person, related_name="email_addresses")
+    person = models.ForeignKey(to=Person, related_name="email_addresses",null=True,blank=True)
     pass
 
 class PersonLocation(PartyLocationModel):
-    person = models.ForeignKey(to=Person, related_name="mail_addresses")
+    person = models.ForeignKey(to=Person, related_name="mail_addresses",null=True,blank=True)
     pass
 
 class PersonPhone(PartyPhoneModel):
-    person = models.ForeignKey(to=Person, related_name="phone_numbers")
+    person = models.ForeignKey(to=Person, related_name="phone_numbers",null=True,blank=True)
     pass
 
 
@@ -185,7 +220,7 @@ class PersonPhone(PartyPhoneModel):
 
 
 class UserKeywords(models.Model):
-    person = models.ForeignKey(Person, related_name="keywords")
+    person = models.ForeignKey(Person, related_name="keywords",)
     keyword = models.CharField(max_length='100')
     createdDate = models.DateField(auto_now_add=True)
     pass
@@ -215,9 +250,9 @@ class UserDemographics(models.Model):
                                  help_text="My Demographics are Public")
     userType = models.CharField(choices=USER_TYPES_CHOICES,max_length='255')
     #keywords = models.ForeignKey(UserKeywords) many to one
-    city = models.ForeignKey(City, null=True)
-    region = models.ForeignKey(Region, null=True)
-    country = models.ForeignKey(Country, null=True)
+    city = models.ForeignKey(City, null=True, blank=True)
+    region = models.ForeignKey(Region, null=True, blank=True)
+    country = models.ForeignKey(Country, null=True, blank=True)
     pass
 
 class OtherNames(models.Model):
@@ -232,38 +267,6 @@ class OtherNames(models.Model):
         ("other", "other type of alias")
     )
     annotation = models.CharField(verbose_name="type of alias", default="citation",max_length='10')
-#=======================================================================================
-# ORGANIZATION
-# ======================================================================================
-# make consistent with CUAHSI
-
-class OrganizationModel(PartyModel):
-    ORG_TYPES_CHOICES = (
-    ("commercial", "Commercial/Professional")
-    , ("university","University")
-    , ("college", "College")
-    , ("gov", "Government Organization")
-    , ("nonprofit", "Non-profit Organization")
-    , ("k12", "School  Kindergarten to 12th Grade")
-    , ("cc", "Community College ")
-    , ("other", "Other")
-    , ("Unspecified", "Unspecified")
-    )
-    logoUrl = models.ImageField(blank=True, upload_to='orgLogos')
-    #smallLogoUrl = models.ImageField()
-    parentOrganization = models.ForeignKey('self', null=True)
-    organizationType = models.CharField(choices=ORG_TYPES_CHOICES,max_length='14')
-    # externalIdentifiers from ExternalOrgIdentifiers
-
-    def __unicode__(self):
-        return unicode(self.name)
-
-    class Meta:
-        abstract = True
-
-class Organization(Displayable, OrganizationModel):
-    persons = models.ManyToManyField(Person,through="OrgAssociations", null=True,related_name="organizations")
-    pass
 
 
 
@@ -324,7 +327,9 @@ class ActivitiesModel(models.Model):
 
 class OrgAssociations(ActivitiesModel):
     # object to handle a person being in one or more organizations
+    #organization = models.ForeignKey(Organization)
     organization = models.ForeignKey(Organization)
+    #person = models.ForeignKey(Person)
     person = models.ForeignKey(Person)
     beginDate = models.DateField(verbose_name="begin date of associate")
     endDate = models.DateField(null=True, verbose_name="End date of association. Empty if still with organization")
@@ -360,19 +365,30 @@ class ExternalIdentifiers(models.Model):
 
 #=======================================
 # USER Profile
+# Mezzanine support AUTH_PROFILE_MODULE
+# Having relationships to person and demographics has issues with the profile.
+# so they just inherit the fields.
+# Possible Solution: AUTH_USER_MODEL
+# # as spec'd in 1.6/1.7 django
 #=======================================
 
 
 
 
-class Scholar(models.Model):
-    user = models.OneToOneField("auth.user")
-    person = models.OneToOneField(Person)
-    demographics = models.ForeignKey(UserDemographics, verbose_name="Demographic Properties", null=True)
+#class Scholar(Person,UserDemographics):
+class Scholar(Person):
+    # removed Displayable. Otherwise it has table etc in the admin fucntion.
+    user = models.OneToOneField("auth.User")
+    #person = models.OneToOneField(Person)
+    demographics = models.ForeignKey(UserDemographics, verbose_name="Demographic Properties", blank=True,null=True)
     #orcidIdentifier = models.OneToOneField(ResearcherUrls,) # not sure if this will work
     #external_identifiers = models.ForeignKey(ScholarExternalIdentifiers, null=True)
     # need a function to handle and store an orcid in external identifiers
+    def create_user_profile(sender, instance, created, **kwargs):
+        if created:
+            Scholar.objects.create(user=instance)
     pass
+
 
 class ScholarExternalIdentifiers(ExternalIdentifiers):
 
@@ -407,8 +423,10 @@ class ScholarExternalIdentifiers(ExternalIdentifiers):
 # hs_user_org.researchgroup: 'persons' is a manually-defined m2m relation through model GroupAssociations, which does not have foreign keys to Person and ResearchGroup
 
 # #============================
+#class ScholarGroupModel(models.Model):
 class ScholarGroupModel(models.Model):
-    '''This is a collection of scholars that is less formal than an organization.
+    '''Extends the Django Groups model
+    This is a collection of scholars that is less formal than an organization.
 
 
     '''
@@ -417,7 +435,7 @@ class ScholarGroupModel(models.Model):
     # * general group has Persons (and subclass Scholar)
     # * ResearchGroup has ResearchUsers only
     #
-    name = models.CharField(max_length='100')
+    #name = models.CharField(max_length='100') # existsing
     groupDescription = models.TextField()
     # Group purpose, open field
     purpose = models.CharField(blank=True, verbose_name="Purpose - a Short description",
@@ -440,20 +458,23 @@ class ScholarGroupModel(models.Model):
     class Meta:
         abstract = True
 
-class ScholarGroup(Displayable,ScholarGroupModel):
-    persons = models.ManyToManyField(to=Scholar,through='ScholarGroupAssociations',related_name="groups",)
+class ScholarGroup(Displayable,Group,ScholarGroupModel):
+    #scholars = models.ManyToManyField(to=Scholar,through='ScholarGroupAssociations',related_name="scholargroups",)
     createdBy = models.OneToOneField(Scholar,related_name='creator_of')
     pass
 
-class ScholarGroupAssociations(ActivitiesModel):
-    # object to handle a person being in one or more organizations
-    group = models.ForeignKey(ScholarGroup)
-    scholar = models.ForeignKey(Scholar)
-    beginDate = models.DateField(verbose_name="begin date of associate")
-    endDate = models.DateField(null=True, verbose_name="End date of association. Empty if still with organization")
-    title = models.CharField(verbose_name="Title or Responsibility", blank=True,max_length='100')
+# group association Manage by Django.
+#  basically, not needed.
+# class ScholarGroupAssociations(ActivitiesModel):
+#     # object to handle a person being in one or more organizations
+#     scholargroup = models.ForeignKey(ScholarGroup)
+#     scholar = models.ForeignKey(Scholar)
+#     beginDate = models.DateField(verbose_name="begin date of associate")
+#     endDate = models.DateField(null=True, verbose_name="End date of association. Empty if still with organization")
+#     title = models.CharField(verbose_name="Title or Responsibility", blank=True,max_length='100')
+#
+#     pass
 
-    pass
 # class ResearchGroup(Page, Group):
 #     users = models.ManyToManyField(to=Scholar, through='ResearchGroupAssociations', null=True, related_name='research_groups')
 #     createdBy = models.ForeignKey(Scholar, related_name="groups_created")
