@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block main %}
+    <h2>organization</h2>
+    <ul>
+        {% for organization in object_list %}
+            <li>{{ organization.name }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

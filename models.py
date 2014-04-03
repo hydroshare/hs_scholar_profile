@@ -167,6 +167,9 @@ class OrganizationModel(PartyModel):
 
 class Organization(Displayable,OrganizationModel):
     #persons = models.ManyToManyField(Person,through="OrgAssociations", null=True,related_name="organizations")
+    def __unicode__(self):
+        return self.name
+
     pass
 
 #======================================================================================
@@ -192,6 +195,9 @@ class PersonModel(PartyModel):
         super(PersonModel, self).__init__(*args, **kwargs)
         if self.givenName is not None and self.familyName is not None:
             self.name = self.givenName + ' ' + self.familyName
+
+    def __unicode__(self):
+        return self.name
 
     class Meta:
         abstract = True
@@ -338,7 +344,7 @@ class OrgAssociations(ActivitiesModel):
                                               help_text="You are presently a member of this Organization")
 
     def __unicode__(self):
-        return u'%s %s' % (self.organization.name + self.person.name)
+        return u'%s is member of %s' % (self.person.name, self.organization.name)
 
 # not a priority
 # class Workshops(ActivitiesModel):
@@ -384,6 +390,9 @@ class Scholar(Person):
     #orcidIdentifier = models.OneToOneField(ResearcherUrls,) # not sure if this will work
     #external_identifiers = models.ForeignKey(ScholarExternalIdentifiers, null=True)
     # need a function to handle and store an orcid in external identifiers
+    def __unicode__(self):
+        return u'%s : %s' % (self.name, self.user.username)
+
     def create_user_profile(sender, instance, created, **kwargs):
         if created:
             Scholar.objects.create(user=instance)

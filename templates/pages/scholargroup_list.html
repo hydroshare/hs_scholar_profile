@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block main %}
+    <h2>Scholar Group</h2>
+    <ul>
+        {% for scholarGroup in object_list %}
+            <li>{{ scholarGroup.name }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

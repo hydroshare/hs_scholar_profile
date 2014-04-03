@@ -1,11 +1,14 @@
-{% extends "pages/page.html" %}
+{% extends "base.html" %}
 {% load  pages_tags mezzanine_tags %}
 
 {% block main %}
-    {% set_page_permissions page %}
+<h1>PERSON</h1>
+
    <div class='row'>
-    {% editable page.person.content %}
-       {{ page.person.content|safe|richtext_filters }}
-    {% endeditable %}
+
+
+       {{ object.name }}
+
    </div>
+
 {% endblock %}

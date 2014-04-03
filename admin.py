@@ -1,6 +1,6 @@
 from copy import deepcopy
 from mezzanine.pages.admin import PageAdmin
-from mezzanine.core.admin import DisplayableAdmin, TabularDynamicInlineAdmin
+from mezzanine.core.admin import DisplayableAdmin, TabularDynamicInlineAdmin, OwnableAdmin
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin
@@ -21,6 +21,7 @@ class PersonInline(admin.TabularInline):
 
 class OrgInline (admin.TabularInline):
     model = Organization
+    list_display = ('name',"organizationType")
 
 
 # class OrgAssociationInline(TabularDynamicInlineAdmin):
@@ -28,7 +29,8 @@ class OrgInline (admin.TabularInline):
 #     extra = 1
 #     inlines = (OrgInline)
 
-class OrganizationAdmin( ModelAdmin):
+#class OrganizationAdmin( ModelAdmin):
+class OrganizationAdmin(DisplayableAdmin):
     model = Organization
     #inlines = (OrgAssociationInline,)
     list_display = ("id","name","organizationType","parentOrganization","url",)
@@ -48,7 +50,7 @@ class PersonAssociationInline(TabularDynamicInlineAdmin):
     extra = 1
     inlines = (OrgInline)
 
-class PersonAdmin(ModelAdmin):
+class PersonAdmin(DisplayableAdmin):
     model = Person
     inlines = (PersonAssociationInline,)# OrgInline)
     list_display = ("id","name","familyName","givenName","jobTitle",)
