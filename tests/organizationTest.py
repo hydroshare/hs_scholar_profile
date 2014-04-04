@@ -28,16 +28,16 @@ class organizationTest(TestCase):
 
     def test_organization(self):
         org1 = Organization.objects.get(name="org1")
-        self.assertEqual(org1.hs_user_org_person_members.count(), 0)
+        self.assertEqual(org1.hs_scholar_profile_person_members.count(), 0)
 
         org2 = Organization.objects.get(name="org2")
-        self.assertEqual(org2.hs_user_org_person_members.count(), 2)
+        self.assertEqual(org2.hs_scholar_profile_person_members.count(), 2)
         associations = OrgAssociations(presentOrganization=True,organization=org2)
         self.assertEqual(associations.presentOrganization, True)
         self.assertEqual(associations.organization, org2)
 
         org3 = Organization.objects.get(name="org3")
-        self.assertEqual(org3.hs_user_org_person_members.count(), 2)
+        self.assertEqual(org3.hs_scholar_profile_person_members.count(), 2)
         # need to learn the query languages and query set
         #self.assertEqual(org3..get(presentOrganization=True), 1)
 

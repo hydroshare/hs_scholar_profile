@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from django.utils.unittest import skipUnless
 from django.test import TestCase
 from ..models import Organization, Person, ScholarGroup,Scholar,UserDemographics#,ScholarGroupAssociations,
 from django.contrib.auth.models import User,Group
@@ -5,10 +7,18 @@ from datetime import date
 from django.test.utils import override_settings
 from django.contrib.auth import get_user_model
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
+from mezzanine.conf import settings
+
 __author__ = 'valentin'
 
 #@override_settings(USE_TZ=False,AUTH_PROFILE_MODULE='hs_user_org.Scholar')
-@override_settings(AUTH_PROFILE_MODULE='hs_user_org.Scholar')
+@skipUnless("hs_scholar_profile" in settings.INSTALLED_APPS,"hs_scholar_profile must be installed" )
+@override_settings(AUTH_PROFILE_MODULE='hs_scholar_profile.Scholar')
 class ScholarAndGroupTest(TestCase):
     def setUp(self):
         self.u1 = User.objects.create(username='user1',email='me@example.com')

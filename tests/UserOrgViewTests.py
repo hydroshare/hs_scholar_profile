@@ -18,7 +18,7 @@ from mezzanine.conf import settings
 
 __author__ = 'valentin'
 
-@skipUnless("hs.hs_user_org" in settings.INSTALLED_APPS,"hs_user_org must be installed" )
+@skipUnless("hs_scholar_profile" in settings.INSTALLED_APPS,"hs_scholar_profile must be installed" )
 class UserOrgViewTests(TestCase):
 
     def setUp(self):

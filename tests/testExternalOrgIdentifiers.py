@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from hs.hs_user_org.models import ExternalOrgIdentifiers, OtherNames
+from ..models import ExternalOrgIdentifiers, OtherNames
 
 __author__ = 'valentin'
 

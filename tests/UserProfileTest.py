@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from django.test import TestCase
+from django.utils.unittest import skipUnless
 from ..models import Organization, Person, ScholarGroup,Scholar,UserDemographics#,ScholarGroupAssociations
 from django.contrib.auth.models import User
 from datetime import date
@@ -8,9 +10,17 @@ from django.contrib.auth import get_user_model
 # using "Custom users and testing/fixtures" https://docs.djangoproject.com/en/1.5/topics/auth/customizing/
 # this disappears in 1.7 docs AUTH_USER_PROFILE depreciatied
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
+from mezzanine.conf import settings
+
 __author__ = 'valentin'
 #@override_settings(USE_TZ=False,AUTH_PROFILE_MODULE='hs_user_org.Scholar')
-@override_settings(AUTH_PROFILE_MODULE='hs_user_org.Scholar')
+@skipUnless("hs_scholar_profile" in settings.INSTALLED_APPS,"hs_scholar_profile must be installed" )
+@override_settings(AUTH_PROFILE_MODULE='hs_scholar_profile.Scholar')
 class UserProfileTest(TestCase):
     def setUp(self):
         self.u1 = User.objects.create(username='user1',email='me@example.com')
@@ -52,7 +62,7 @@ class UserProfileTest(TestCase):
         #auser.demographics
 
 
-    @override_settings(AUTH_PROFILE_MODULE='hs_user_org.Scholar')
+    @override_settings(AUTH_PROFILE_MODULE='hs_scholar_profile.Scholar')
     def test_custom_user(self):
         "Run tests for a custom user model with email-based authentication"
         self.assertEqual(User.objects.count(),1,"user object count not 1")
